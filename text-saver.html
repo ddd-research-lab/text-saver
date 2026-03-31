@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Saver — テキスト保存ツール</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ee;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: #d8d4cb;
+  --border2: #c8c4bb;
+  --text: #1a1916;
+  --text2: #6b6860;
+  --text3: #a09e9a;
+  --accent: #2a2724;
+  --accent-bg: #2a2724;
+  --accent-text: #f5f3ee;
+  --save-bg: #2a2724;
+  --save-text: #f5f3ee;
+  --save-hover: #3d3a36;
+  --toast-bg: #2a2724;
+  --toast-text: #f5f3ee;
+  --radius: 6px;
+  --radius-lg: 10px;
+}
+[data-theme="dark"] {
+  --bg: #141311;
+  --surface: #1e1c19;
+  --surface2: #252320;
+  --border: #302e2a;
+  --border2: #3e3c38;
+  --text: #edeae4;
+  --text2: #8c8a85;
+  --text3: #5a5855;
+  --accent: #d4cfc7;
+  --accent-bg: #edeae4;
+  --accent-text: #1a1916;
+  --save-bg: #edeae4;
+  --save-text: #1a1916;
+  --save-hover: #d4cfc7;
+  --toast-bg: #edeae4;
+  --toast-text: #1a1916;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: 'DM Mono', monospace;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background 0.2s, color 0.2s;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.logo span {
+  font-weight: 400;
+  color: var(--text2);
+  font-size: 13px;
+  margin-left: 10px;
+  font-family: 'DM Mono', monospace;
+}
+
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-toggle:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+
+.theme-icon { font-size: 14px; }
+
+main {
+  flex: 1;
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 28px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.field-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.field-group:focus-within { border-color: var(--border2); }
+
+.field-group input {
+  flex: 1;
+  height: 38px;
+  padding: 0 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+}
+.field-group input::placeholder { color: var(--text3); }
+
+.field-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+
+.field-group select {
+  height: 38px;
+  padding: 0 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.enc-group {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+  height: 38px;
+}
+.enc-btn {
+  padding: 0 12px;
+  height: 100%;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.enc-btn:last-child { border-right: none; }
+.enc-btn:hover { background: var(--surface2); color: var(--text); }
+.enc-btn.active { background: var(--surface2); color: var(--text); font-weight: 500; }
+
+.btn-clear {
+  height: 38px;
+  padding: 0 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.btn-clear:hover { border-color: var(--border2); color: var(--text); background: var(--surface2); }
+
+.btn-save {
+  height: 38px;
+  padding: 0 20px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--save-text);
+  background: var(--save-bg);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+.btn-save:hover { background: var(--save-hover); }
+.btn-save:active { transform: scale(0.98); }
+
+.editor-wrap {
+  position: relative;
+}
+
+#editor {
+  width: 100%;
+  min-height: 420px;
+  padding: 16px 18px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.15s, background 0.2s;
+  tab-size: 2;
+}
+#editor:focus { border-color: var(--border2); }
+#editor::placeholder { color: var(--text3); }
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 11.5px;
+  color: var(--text3);
+  padding: 0 2px;
+}
+.statusbar .sep { color: var(--border2); }
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: var(--toast-bg);
+  color: var(--toast-text);
+  font-family: 'DM Mono', monospace;
+  font-size: 12.5px;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s, transform 0.18s;
+  white-space: nowrap;
+  z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+footer {
+  text-align: center;
+  padding: 14px;
+  font-size: 11px;
+  color: var(--text3);
+  border-top: 1px solid var(--border);
+  font-family: 'DM Mono', monospace;
+}
+
+.ext-guide {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+.ext-guide-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+}
+.ext-guide-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text2);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+.ext-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.ext-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  background: var(--bg);
+  transition: border-color 0.15s;
+}
+.ext-card:hover { border-color: var(--border2); }
+.ext-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ext-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.ext-name {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--text3);
+}
+.ext-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.ext-row:last-child { margin-bottom: 0; }
+.ext-label {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-top: 2px;
+  letter-spacing: 0.3px;
+}
+.label-pro {
+  background: #e6f4ec;
+  color: #2a7a4a;
+}
+.label-con {
+  background: #faeaea;
+  color: #a33030;
+}
+[data-theme="dark"] .label-pro { background: #1a3326; color: #5ec98a; }
+[data-theme="dark"] .label-con { background: #331a1a; color: #e07070; }
+.ext-desc { color: var(--text2); }
+
+.enc-guide {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.enc-guide-inner {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+}
+.enc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.enc-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+.enc-card:hover { border-color: var(--border2); }
+.enc-card-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.enc-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.enc-full {
+  font-family: 'DM Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text3);
+}
+.enc-summary {
+  font-size: 12px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.enc-use {
+  font-size: 11.5px;
+  color: var(--text3);
+  line-height: 1.6;
+}
+.enc-use strong { color: var(--text2); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Text Saver
+    <span>テキスト保存ツール</span>
+  </div>
+  <button class="theme-toggle" id="themeToggle">
+    <span class="theme-icon" id="themeIcon">☾</span>
+    <span id="themeLabel">ダーク</span>
+  </button>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="field-group">
+      <input type="text" id="fname" value="document" placeholder="ファイル名" />
+      <div class="field-divider"></div>
+      <select id="ext">
+        <option value=".txt">.txt</option>
+        <option value=".md">.md</option>
+        <option value=".csv">.csv</option>
+        <option value=".html">.html</option>
+        <option value=".json">.json</option>
+        <option value=".js">.js</option>
+        <option value=".py">.py</option>
+      </select>
+    </div>
+
+    <div class="enc-group">
+      <button class="enc-btn active" data-enc="utf8">UTF-8</button>
+      <button class="enc-btn" data-enc="utf8bom">BOM</button>
+      <button class="enc-btn" data-enc="sjis">SJIS</button>
+    </div>
+
+    <button class="btn-clear" id="clearBtn">クリア</button>
+    <button class="btn-save" id="saveBtn">保存 ↓</button>
+  </div>
+
+  <div class="editor-wrap">
+    <textarea id="editor" placeholder="ここにテキストを入力してください…" spellcheck="false"></textarea>
+  </div>
+
+  <div class="statusbar">
+    <span id="charCount">0 文字</span>
+    <span class="sep">|</span>
+    <span id="lineCount">0 行</span>
+    <span class="sep">|</span>
+    <span id="byteCount">0 bytes</span>
+  </div>
+</main>
+
+<section class="enc-guide">
+  <div class="enc-guide-inner">
+    <div class="ext-guide-title">文字コードガイド</div>
+    <div class="enc-grid">
+
+      <div class="enc-card">
+        <div class="enc-card-header">
+          <span class="enc-badge">UTF-8</span>
+          <span class="enc-full">Unicode Transformation Format 8-bit</span>
+        </div>
+        <div class="enc-summary">世界中の文字を1つの規格で扱える現代の標準文字コード。日本語・英語・絵文字など多言語を混在させてもほぼ文字化けしない。</div>
+        <div class="enc-use"><strong>推奨場面：</strong>ウェブ・GitHub・APIなど、インターネット上でやり取りするファイル全般。迷ったらこれを選ぶ。</div>
+      </div>
+
+      <div class="enc-card">
+        <div class="enc-card-header">
+          <span class="enc-badge">UTF-8 BOM</span>
+          <span class="enc-full">UTF-8 with Byte Order Mark</span>
+        </div>
+        <div class="enc-summary">UTF-8の先頭に「このファイルはUTF-8です」という3バイトの目印（BOM）を付加したもの。アプリが自動判別しやすくなる。</div>
+        <div class="enc-use"><strong>推奨場面：</strong>ExcelでCSVを開いたときに日本語が文字化けする場合。WindowsのメモやOffice系ツールとのやり取り。</div>
+      </div>
+
+      <div class="enc-card">
+        <div class="enc-card-header">
+          <span class="enc-badge">Shift_JIS</span>
+          <span class="enc-full">Japanese Industrial Standard</span>
+        </div>
+        <div class="enc-summary">日本語のために設計された文字コード。かつてWindowsや日本のウェブサイトで広く使われていたが、現在は UTF-8 への移行が進んでいる。</div>
+        <div class="enc-use"><strong>推奨場面：</strong>古い業務システムへのCSV取り込み、レガシーな社内ツールとのデータ連携。新規ファイルには非推奨。</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="ext-guide">
+  <div class="ext-guide-inner">
+    <div class="ext-guide-title">拡張子ガイド</div>
+    <div class="ext-grid">
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.txt</span>
+          <span class="ext-name">プレーンテキスト</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">あらゆるOSやエディタで開ける。最も汎用的な形式</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">ファイルサイズが小さく、動作が軽快</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">太字・色などの書式情報は保存できない</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.md</span>
+          <span class="ext-name">Markdown</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">記号で見出し・太字・リストなどを表現できる</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">GitHub・Notion・Zennなど多くのサービスに対応</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">対応エディタがないと記号がそのまま表示される</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.csv</span>
+          <span class="ext-name">カンマ区切りデータ</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">ExcelやGoogleスプレッドシートで即座に開ける</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">データベースやアプリへの取り込みに最適</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">カンマを含むデータはクォートが必要で扱いが複雑</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.html</span>
+          <span class="ext-name">ウェブページ</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">ブラウザでそのままプレビュー・公開できる</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">リンク・画像・スタイルなど豊富な表現が可能</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">タグ記法の知識がないと読み書きが難しい</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.json</span>
+          <span class="ext-name">構造化データ</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">アプリの設定ファイルやAPIデータとして広く使われる</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">入れ子構造・配列など複雑なデータを表現できる</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">構文エラーが1文字でも全体が無効になる</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.js</span>
+          <span class="ext-name">JavaScript</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">ブラウザやNode.jsで直接実行できるスクリプト</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">VSCodeなどで構文ハイライトが有効になる</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">ウイルス誤検知リスクがあり、メール送信が制限される場合がある</span></div>
+      </div>
+
+      <div class="ext-card">
+        <div class="ext-card-header">
+          <span class="ext-badge">.py</span>
+          <span class="ext-name">Python</span>
+        </div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">Pythonインタープリタで即実行できるスクリプト</span></div>
+        <div class="ext-row"><span class="ext-label label-pro">◎</span><span class="ext-desc">エディタでシンタックスハイライトが適用される</span></div>
+        <div class="ext-row"><span class="ext-label label-con">×</span><span class="ext-desc">インデントが構文の一部のため、崩れると動作しない</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>No data is sent to any server. Everything runs locally in your browser.</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const editor = document.getElementById('editor');
+const charCount = document.getElementById('charCount');
+const lineCount = document.getElementById('lineCount');
+const byteCount = document.getElementById('byteCount');
+const toast = document.getElementById('toast');
+let currentEnc = 'utf8';
+
+function updateStats() {
+  const t = editor.value;
+  charCount.textContent = t.length.toLocaleString() + ' 文字';
+  lineCount.textContent = (t === '' ? 0 : t.split('\n').length).toLocaleString() + ' 行';
+  byteCount.textContent = new Blob([t]).size.toLocaleString() + ' bytes';
+}
+editor.addEventListener('input', updateStats);
+updateStats();
+
+document.querySelectorAll('.enc-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.enc-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentEnc = btn.dataset.enc;
+  });
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (!editor.value || confirm('テキストをクリアしますか？')) {
+    editor.value = '';
+    updateStats();
+  }
+});
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+function sjisEncode(str) {
+  const buf = [];
+  for (let i = 0; i < str.length; i++) {
+    const c = str.charCodeAt(i);
+    if (c < 0x80) { buf.push(c); continue; }
+    if (c >= 0xFF61 && c <= 0xFF9F) { buf.push(c - 0xFF61 + 0xA1); continue; }
+    buf.push(0x3F);
+  }
+  return new Uint8Array(buf);
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const text = editor.value;
+  if (!text.trim()) { showToast('テキストが空です'); return; }
+
+  const fname = (document.getElementById('fname').value.trim() || 'document') + document.getElementById('ext').value;
+  let blob;
+
+  if (currentEnc === 'utf8bom') {
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const body = new TextEncoder().encode(text);
+    const merged = new Uint8Array(bom.length + body.length);
+    merged.set(bom); merged.set(body, bom.length);
+    blob = new Blob([merged], { type: 'text/plain' });
+  } else if (currentEnc === 'sjis') {
+    blob = new Blob([sjisEncode(text)], { type: 'text/plain;charset=shift_jis' });
+  } else {
+    blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast('「' + fname + '」を保存しました');
+});
+
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const themeLabel = document.getElementById('themeLabel');
+const html = document.documentElement;
+
+const saved = localStorage.getItem('ts-theme');
+if (saved === 'dark') setTheme('dark');
+
+function setTheme(t) {
+  html.setAttribute('data-theme', t);
+  localStorage.setItem('ts-theme', t);
+  if (t === 'dark') {
+    themeIcon.textContent = '☀';
+    themeLabel.textContent = 'ライト';
+  } else {
+    themeIcon.textContent = '☾';
+    themeLabel.textContent = 'ダーク';
+  }
+}
+
+themeToggle.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>
